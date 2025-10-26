@@ -395,81 +395,44 @@ const ThreatDashboard = () => {
     }
   }, [demoSelected, dronePhase, updatePhaseData]);
 
+  const phaseVideoSources = {
+    EN_ROUTE: "/videos/drone_enroute.mp4",
+    SCANNING: "/videos/drone_scanning.mp4",
+    NEGOTIATION: "/videos/drone_negotiation.mp4",
+  };
+
   const renderDronePhase = () => {
-    if (dronePhase === "NEGOTIATION") {
-      return (
-        <div className="relative h-full w-full">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover rounded-lg"
-            onError={() => setVideoError(true)}
-            onLoadedData={() => setVideoError(false)}
-          >
-            <source src="/public/videos/drone_negotiation.mp4" type="video/mp4" />
-          </video>
-          {videoError && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
-              NO SIGNAL DETECTED
-            </div>
-          )}
-        </div>
-      );
-    }
+    const videoSrc = phaseVideoSources[dronePhase];
 
-    if (dronePhase === "SCANNING") {
+    if (!videoSrc) {
       return (
-        <div className="relative h-full w-full">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover rounded-lg"
-            onError={() => setVideoError(true)}
-            onLoadedData={() => setVideoError(false)}
-          >
-            <source src="/public/videos/drone_scanning.mp4" type="video/mp4" />
-          </video>
-          {videoError && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
-              NO SIGNAL DETECTED
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (dronePhase === "EN_ROUTE") {
-      return (
-        <div className="relative h-full w-full">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover rounded-lg"
-            onError={() => setVideoError(true)}
-            onLoadedData={() => setVideoError(false)}
-          >
-            <source src="/public/videos/drone_enroute.mp4" type="video/mp4" />
-          </video>
-          {videoError && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
-              NO SIGNAL DETECTED
-            </div>
-          )}
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="text-sm uppercase tracking-[0.5em] text-white/50">
+            DRONE STANDING BY
+          </span>
         </div>
       );
     }
 
     return (
-      <div className="flex h-full w-full items-center justify-center">
-        <span className="text-sm uppercase tracking-[0.5em] text-white/50">
-          DRONE STANDING BY
-        </span>
+      <div className="relative h-full w-full">
+        <video
+          key={dronePhase}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover rounded-lg"
+          onError={() => setVideoError(true)}
+          onLoadedData={() => setVideoError(false)}
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+        {videoError && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
+            NO SIGNAL DETECTED
+          </div>
+        )}
       </div>
     );
   };
