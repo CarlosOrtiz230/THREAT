@@ -22,7 +22,7 @@ const demoCases = [
     weapon_detected: 0,
     subjects: [],
     summary:
-      "Caller reports disturbance; three people inside; no confirmed weapon on call.",
+      "Caller reports loud arguing and possible physical disturbance inside a single-story residence. Visual confirmation pending. Three individuals believed to be present — possibly family members. No confirmed weapon at this stage, though dispatch noted prior noise complaints from this address. Units advised to maintain caution until scene assessment complete.",
   },
   {
     id: 2,
@@ -32,7 +32,7 @@ const demoCases = [
     weapon_detected: 1,
     subjects: [],
     summary:
-      "Case ORBIT-02: Three individuals near loading bay. One low-confidence sidearm outline.",
+      "Drone telemetry shows three subjects gathered near a warehouse loading bay. One object resembling a sidearm detected with low confidence on Subject 2’s right hip — could be a holstered tool or replica. Subjects appear agitated but stationary. Recommend maintaining drone altitude and awaiting officer confirmation before escalation.",
     videoSrc: null,
   },
   {
@@ -43,10 +43,11 @@ const demoCases = [
     weapon_detected: 1,
     subjects: [{ name: "John Doe" }],
     summary:
-      "Known offender John Doe armed. Backup required. Engage high alert protocol.",
+      "Identified subject: John Doe, previously flagged for violent offenses and noncompliance during prior encounters. Drone imagery confirms armed status — metallic handgun visible in right hand. Subject pacing near rear entrance of property. Immediate backup and tactical containment recommended. Activate high-alert protocol and restrict civilian approach radius within 200 meters.",
     videoSrc: null,
   },
 ];
+
 
 const severityStyles = {
   low: {
@@ -140,13 +141,13 @@ const ThreatDashboard = () => {
     [activeCase.severity]
   );
 
-  const handleReadBriefing = async () => {
-    const apiKey = process.env.OPENAI_API_KEY || "";
+    const handleReadBriefing = async () => {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
 
-    if (!apiKey) {
-      setTtsError("Missing OpenAI API key.");
-      return;
-    }
+      if (!apiKey) {
+        setTtsError("Missing OpenAI API key.");
+        return;
+      }
 
     setIsReading(true);
     setTtsError("");
@@ -395,81 +396,44 @@ const ThreatDashboard = () => {
     }
   }, [demoSelected, dronePhase, updatePhaseData]);
 
+  const phaseVideoSources = {
+    EN_ROUTE: "public/videos/drone_enroute.mp4",
+    SCANNING: "public/videos/drone_scanning.mp4",
+    NEGOTIATION: "public/videos/drone_negotiation.mp4",
+  };
+
   const renderDronePhase = () => {
-    if (dronePhase === "NEGOTIATION") {
-      return (
-        <div className="relative h-full w-full">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover rounded-lg"
-            onError={() => setVideoError(true)}
-            onLoadedData={() => setVideoError(false)}
-          >
-            <source src="/public/videos/drone_negotiation.mp4" type="video/mp4" />
-          </video>
-          {videoError && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
-              NO SIGNAL DETECTED
-            </div>
-          )}
-        </div>
-      );
-    }
+    const videoSrc = phaseVideoSources[dronePhase];
 
-    if (dronePhase === "SCANNING") {
+    if (!videoSrc) {
       return (
-        <div className="relative h-full w-full">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover rounded-lg"
-            onError={() => setVideoError(true)}
-            onLoadedData={() => setVideoError(false)}
-          >
-            <source src="/public/videos/drone_scanning.mp4" type="video/mp4" />
-          </video>
-          {videoError && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
-              NO SIGNAL DETECTED
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (dronePhase === "EN_ROUTE") {
-      return (
-        <div className="relative h-full w-full">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover rounded-lg"
-            onError={() => setVideoError(true)}
-            onLoadedData={() => setVideoError(false)}
-          >
-            <source src="/public/videos/drone_enroute.mp4" type="video/mp4" />
-          </video>
-          {videoError && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
-              NO SIGNAL DETECTED
-            </div>
-          )}
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="text-sm uppercase tracking-[0.5em] text-white/50">
+            DRONE STANDING BY
+          </span>
         </div>
       );
     }
 
     return (
-      <div className="flex h-full w-full items-center justify-center">
-        <span className="text-sm uppercase tracking-[0.5em] text-white/50">
-          DRONE STANDING BY
-        </span>
+      <div className="relative h-full w-full">
+        <video
+          key={dronePhase}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover rounded-lg"
+          onError={() => setVideoError(true)}
+          onLoadedData={() => setVideoError(false)}
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+        {videoError && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
+            NO SIGNAL DETECTED
+          </div>
+        )}
       </div>
     );
   };
