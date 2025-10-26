@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Circle,
   Map,
@@ -276,6 +276,88 @@ const ThreatDashboard = () => {
     return () => clearTimeout(detectionTimeout);
   }, [dronePhase, demoSelected, weaponDetected]);
 
+  const updatePhaseData = useCallback(
+    (phase) => {
+      const applyPhaseUpdates = (updates) => {
+        setCasesState((prev) => {
+          let changed = false;
+          const next = prev.map((caseItem) => {
+            if (caseItem.id !== 1) {
+              return caseItem;
+            }
+
+            const subjectsMatch =
+              JSON.stringify(caseItem.subjects) ===
+              JSON.stringify(updates.subjects ?? caseItem.subjects);
+
+            const matches =
+              caseItem.severity === updates.severity &&
+              caseItem.people_count === updates.people_count &&
+              caseItem.weapon_detected === updates.weapon_detected &&
+              subjectsMatch;
+
+            if (matches) {
+              return caseItem;
+            }
+
+            changed = true;
+            return {
+              ...caseItem,
+              ...updates,
+            };
+          });
+
+          return changed ? next : prev;
+        });
+      };
+
+      if (phase === "EN_ROUTE") {
+        if (demoSelected === 1) {
+          applyPhaseUpdates({
+            severity: "medium",
+            people_count: 3,
+            weapon_detected: 0,
+            subjects: [],
+          });
+        }
+        setWeaponDetected(false);
+      } else if (phase === "SCANNING") {
+        if (demoSelected === 1) {
+          applyPhaseUpdates({
+            severity: "high",
+            people_count: 5,
+            weapon_detected: 1,
+            subjects: [
+              { name: "Subject A", img: "/images/subject1.jpg" },
+              { name: "Subject B", img: "/images/subject2.jpg" },
+            ],
+          });
+        }
+        setWeaponDetected(true);
+      } else if (phase === "NEGOTIATION") {
+        if (demoSelected === 1) {
+          applyPhaseUpdates({
+            severity: "high",
+            people_count: 5,
+            weapon_detected: 1,
+            subjects: [
+              { name: "Subject A", img: "/images/subject1.jpg" },
+              { name: "Subject B", img: "/images/subject2.jpg" },
+            ],
+          });
+        }
+        setWeaponDetected(true);
+      }
+    },
+    [demoSelected]
+  );
+
+  const handlePhaseChange = (phase) => {
+    setDronePhase(phase);
+    setVideoError(false);
+    updatePhaseData(phase);
+  };
+
   const handleSelectDemo = (id) => {
     setDemoSelected(id);
     setView("drone");
@@ -299,6 +381,20 @@ const ThreatDashboard = () => {
     setVideoError(false);
   }, [dronePhase]);
 
+  useEffect(() => {
+    if (demoSelected !== 1) {
+      return;
+    }
+
+    if (
+      dronePhase === "EN_ROUTE" ||
+      dronePhase === "SCANNING" ||
+      dronePhase === "NEGOTIATION"
+    ) {
+      updatePhaseData(dronePhase);
+    }
+  }, [demoSelected, dronePhase, updatePhaseData]);
+
   const renderDronePhase = () => {
     if (dronePhase === "NEGOTIATION") {
       return (
@@ -312,8 +408,7 @@ const ThreatDashboard = () => {
             onError={() => setVideoError(true)}
             onLoadedData={() => setVideoError(false)}
           >
-            {/* TODO: replace src with /src/assets/videos/drone_negotiation.mp4 */}
-            <source src="" type="video/mp4" />
+            <source src="/assets/videos/drone_negotiation.mp4" type="video/mp4" />
           </video>
           {videoError && (
             <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
@@ -336,8 +431,7 @@ const ThreatDashboard = () => {
             onError={() => setVideoError(true)}
             onLoadedData={() => setVideoError(false)}
           >
-            {/* TODO: replace src with /src/assets/videos/drone_scanning.mp4 */}
-            <source src="" type="video/mp4" />
+            <source src="/assets/videos/drone_scanning.mp4" type="video/mp4" />
           </video>
           {videoError && (
             <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
@@ -360,8 +454,7 @@ const ThreatDashboard = () => {
             onError={() => setVideoError(true)}
             onLoadedData={() => setVideoError(false)}
           >
-            {/* TODO: replace src with /src/assets/videos/drone_enroute.mp4 */}
-            <source src="" type="video/mp4" />
+            <source src="/assets/videos/drone_enroute.mp4" type="video/mp4" />
           </video>
           {videoError && (
             <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
@@ -429,6 +522,8 @@ const ThreatDashboard = () => {
     { id: 3, label: "Demo 3" },
   ];
 
+  const phaseButtons = ["EN_ROUTE", "SCANNING", "NEGOTIATION"];
+
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#0a0a0f] text-white">
       <header className="flex h-[10vh] items-center justify-between border-b border-white/10 bg-white/5 px-8 backdrop-blur-md shadow-lg">
@@ -458,6 +553,23 @@ const ThreatDashboard = () => {
                 {label}
               </Button>
             ))}
+            <div className="ml-4 flex items-center gap-2">
+              {phaseButtons.map((phase) => (
+                <Button
+                  key={phase}
+                  size="default"
+                  onClick={() => handlePhaseChange(phase)}
+                  className={cn(
+                    "h-9 rounded-xl border border-white/20 bg-white/5 px-3 text-[0.6rem] uppercase tracking-[0.3em]",
+                    dronePhase === phase
+                      ? "bg-white/30 text-white shadow-[0_0_12px_rgba(22,241,149,0.35)]"
+                      : "text-white/60 hover:bg-white/15"
+                  )}
+                >
+                  Phase: {phase.replace("_", " ")}
+                </Button>
+              ))}
+            </div>
           </div>
           <p className="text-sm uppercase tracking-[0.4em] text-white/60">
             Mission {activeCase.mission}
@@ -554,28 +666,31 @@ const ThreatDashboard = () => {
                 </div>
               ) : (
                 <div className="grid h-full grid-cols-2 gap-4 overflow-auto">
-                  {activeCase.subjects.map((subject) => (
-                    <div
-                      key={subject.name}
-                      className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-white/5 p-4 text-center"
-                    >
-                      <div className="h-16 w-16 overflow-hidden rounded-full bg-black/50">
-                        {subject.image ? (
-                          <img
-                            alt={subject.name}
-                            className="h-full w-full object-cover"
-                            src={subject.image}
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[0.55rem] uppercase tracking-[0.3em] text-white/40">
-                            {/* TODO: replace src with /src/assets/images/subject1.jpg */}
-                            No Image
-                          </div>
-                        )}
+                  {activeCase.subjects.map((subject) => {
+                    const imageSrc = subject.img ?? subject.image;
+
+                    return (
+                      <div
+                        key={subject.name}
+                        className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-white/5 p-4 text-center"
+                      >
+                        <div className="h-16 w-16 overflow-hidden rounded-full bg-black/50">
+                          {imageSrc ? (
+                            <img
+                              alt={subject.name}
+                              className="h-full w-full object-cover"
+                              src={imageSrc}
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[0.55rem] uppercase tracking-[0.3em] text-white/40">
+                              No Image
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm font-semibold">{subject.name}</p>
                       </div>
-                      <p className="text-sm font-semibold">{subject.name}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
