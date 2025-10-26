@@ -96,6 +96,8 @@ const ThreatDashboard = () => {
   const [weaponDetected, setWeaponDetected] = useState(false);
   // toast feedback for unavailable actions
   const [notice, setNotice] = useState("");
+  // video fallback state for drone feed errors
+  const [videoError, setVideoError] = useState(false);
   const noticeTimeoutRef = useRef(null);
 
   const activeCase = useMemo(
@@ -222,9 +224,11 @@ const ThreatDashboard = () => {
       // kick off the scripted trip for demo 1
       setDronePhase("EN_ROUTE");
       setTripSeconds(90);
+      setVideoError(false);
     } else {
       setDronePhase("IDLE");
       setTripSeconds(0);
+      setVideoError(false);
     }
   }, [demoSelected]);
 
@@ -290,34 +294,81 @@ const ThreatDashboard = () => {
   const tripTimerDisplay = formatTimer(tripSeconds);
   const negotiationUnlocked = dronePhase === "SCANNING" && weaponDetected;
 
+  useEffect(() => {
+    // reset video fallback message when phase updates
+    setVideoError(false);
+  }, [dronePhase]);
+
   const renderDronePhase = () => {
     if (dronePhase === "NEGOTIATION") {
       return (
-        <video className="w-full h-full object-cover rounded-lg" controls>
-          {/* TODO: replace src with /src/assets/videos/drone_negotiation.mp4 */}
-          <source src="" type="video/mp4" />
-          NO SIGNAL DETECTED
-        </video>
+        <div className="relative h-full w-full">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover rounded-lg"
+            onError={() => setVideoError(true)}
+            onLoadedData={() => setVideoError(false)}
+          >
+            {/* TODO: replace src with /src/assets/videos/drone_negotiation.mp4 */}
+            <source src="" type="video/mp4" />
+          </video>
+          {videoError && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
+              NO SIGNAL DETECTED
+            </div>
+          )}
+        </div>
       );
     }
 
     if (dronePhase === "SCANNING") {
       return (
-        <video className="w-full h-full object-cover rounded-lg" controls>
-          {/* TODO: replace src with /src/assets/videos/drone_scanning.mp4 */}
-          <source src="" type="video/mp4" />
-          NO SIGNAL DETECTED
-        </video>
+        <div className="relative h-full w-full">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover rounded-lg"
+            onError={() => setVideoError(true)}
+            onLoadedData={() => setVideoError(false)}
+          >
+            {/* TODO: replace src with /src/assets/videos/drone_scanning.mp4 */}
+            <source src="" type="video/mp4" />
+          </video>
+          {videoError && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
+              NO SIGNAL DETECTED
+            </div>
+          )}
+        </div>
       );
     }
 
     if (dronePhase === "EN_ROUTE") {
       return (
-        <video className="w-full h-full object-cover rounded-lg" controls>
-          {/* TODO: replace src with /src/assets/videos/drone_enroute.mp4 */}
-          <source src="" type="video/mp4" />
-          NO SIGNAL DETECTED
-        </video>
+        <div className="relative h-full w-full">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover rounded-lg"
+            onError={() => setVideoError(true)}
+            onLoadedData={() => setVideoError(false)}
+          >
+            {/* TODO: replace src with /src/assets/videos/drone_enroute.mp4 */}
+            <source src="" type="video/mp4" />
+          </video>
+          {videoError && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
+              NO SIGNAL DETECTED
+            </div>
+          )}
+        </div>
       );
     }
 
@@ -589,9 +640,11 @@ const ThreatDashboard = () => {
           <div className="mt-4 flex flex-1 items-center justify-between rounded-2xl bg-black/40 p-4">
             <div className="max-w-[60%] space-y-2 text-sm text-white/70">
               <p className="uppercase tracking-[0.3em] text-white/50">
-                Briefing Summary
+                Audio Control
               </p>
-              <p className="leading-relaxed">{activeCase.summary}</p>
+              <p className="leading-relaxed text-white/60">
+                Trigger briefing playback to hear the active case summary without displaying it on this view.
+              </p>
               {ttsError && <p className="text-xs text-[#ff4b4b]">{ttsError}</p>}
             </div>
             <div className="flex w-56 flex-col gap-2">
