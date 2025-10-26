@@ -63,13 +63,6 @@ const severityStyles = {
   },
 };
 
-const viewButtons = [
-  { key: "drone", label: "Drone View", icon: Video },
-  { key: "map", label: "Map", icon: Map },
-  { key: "summary", label: "AI Summary", icon: ScrollText },
-  { key: "tts", label: "Read Briefing (TTS)", icon: Volume2 },
-];
-
 const formatTimer = (seconds) => {
   const mins = Math.floor(seconds / 60)
     .toString()
@@ -83,11 +76,12 @@ const formatTimer = (seconds) => {
 const ThreatDashboard = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [syncTimer, setSyncTimer] = useState(0);
-  const [currentView, setCurrentView] = useState("drone");
+  const [view, setView] = useState("drone");
   const [audioSrc, setAudioSrc] = useState("");
   const [isReading, setIsReading] = useState(false);
   const [ttsError, setTtsError] = useState("");
   const audioRef = useRef(null);
+  const [mapUnavailable, setMapUnavailable] = useState(false);
 
   const activeCase = demoCases[activeIndex];
 
@@ -126,7 +120,6 @@ const ThreatDashboard = () => {
       return;
     }
 
-    setCurrentView("tts");
     setIsReading(true);
     setTtsError("");
 
@@ -177,6 +170,69 @@ const ThreatDashboard = () => {
     }
   };
 
+  useEffect(() => {
+    if (view !== "map") {
+      return;
+    }
+    setMapUnavailable(false);
+  }, [view]);
+
+  const renderPrimaryView = () => {
+    if (view === "map") {
+      return (
+        <>
+          {/* TODO: replace src with /src/assets/images/map_view.jpg */}
+          {mapUnavailable ? (
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="text-sm uppercase tracking-[0.5em] text-white/50">
+                MAP DATA UNAVAILABLE.
+              </span>
+            </div>
+          ) : (
+            <img
+              alt="Mission Map"
+              className="h-full w-full object-cover"
+              src="/src/assets/images/map_view.jpg"
+              onError={() => setMapUnavailable(true)}
+            />
+          )}
+        </>
+      );
+    }
+
+    if (view === "summary") {
+      return (
+        <div className="flex h-full w-full items-center justify-center px-12 text-center">
+          <p className="text-3xl font-semibold leading-relaxed text-white">
+            {activeCase.summary}
+          </p>
+        </div>
+      );
+    }
+
+    return activeCase.videoSrc ? (
+      <video
+        className="h-full w-full rounded-lg object-cover"
+        src={activeCase.videoSrc}
+        muted
+        loop
+        autoPlay
+      ></video>
+    ) : (
+      <div className="flex h-full w-full items-center justify-center">
+        <span className="text-sm uppercase tracking-[0.5em] text-white/50">
+          NO SIGNAL DETECTED
+        </span>
+      </div>
+    );
+  };
+
+  const primaryViewButtons = [
+    { key: "drone", label: "Drone View", icon: Video },
+    { key: "map", label: "Map", icon: Map },
+    { key: "summary", label: "AI Summary", icon: ScrollText },
+  ];
+
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#0a0a0f] text-white">
       <header className="flex h-[10vh] items-center justify-between border-b border-white/10 bg-white/5 px-8 backdrop-blur-md shadow-lg">
@@ -198,27 +254,21 @@ const ThreatDashboard = () => {
       <main className="flex h-[70vh] gap-4 px-4">
         <section className="flex flex-[2] flex-col overflow-hidden rounded-3xl bg-white/5 p-4 shadow-lg backdrop-blur-lg">
           <div className="mb-3 flex items-center justify-between text-sm text-white/70">
-            <span className="uppercase tracking-[0.4em]">Drone Feed</span>
+            <span className="uppercase tracking-[0.4em]">
+              {view === "drone"
+                ? "Drone Feed"
+                : view === "map"
+                ? "Mission Map"
+                : "AI Summary"}
+            </span>
             <span className="uppercase tracking-[0.3em] text-white/50">
-              {currentView === "drone" ? "LIVE" : "STANDBY"}
+              {view === "drone" ? "LIVE" : view === "map" ? "TACTICAL" : "INTEL"}
             </span>
           </div>
           <div className="relative flex-1 overflow-hidden rounded-2xl bg-black/70">
-          {activeCase.videoSrc ? (
-            <video
-              className="w-full h-full object-cover rounded-lg"
-              src={activeCase.videoSrc}
-              muted
-              loop
-              autoPlay
-            ></video>
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <span className="text-sm uppercase tracking-[0.5em] text-white/50">
-                NO SIGNAL DETECTED
-              </span>
+            <div className="absolute inset-0 h-full w-full transition-opacity duration-300">
+              {renderPrimaryView()}
             </div>
-          )}
             <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-3 rounded-full bg-black/50 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/70">
               <Circle className="h-3 w-3 text-[#ff4b4b]" />
               <span>REC</span>
@@ -254,22 +304,7 @@ const ThreatDashboard = () => {
 
           <div
             className="mt-0 flex w-full flex-shrink-0 flex-col rounded-3xl bg-white/5 p-4 shadow-lg backdrop-blur-lg"
-            style={{ height: "20vh" }}
-          >
-            <div className="flex items-center justify-between text-xs uppercase tracking-[0.4em] text-white/60">
-              <span>Case Summary</span>
-              <span>{currentView.toUpperCase()}</span>
-            </div>
-            <div className="mt-3 flex-1 overflow-hidden rounded-2xl bg-black/30 p-4">
-              <p className="h-full overflow-auto text-sm leading-relaxed text-white/80">
-                {activeCase.summary}
-              </p>
-            </div>
-          </div>
-
-          <div
-            className="mt-0 flex w-full flex-shrink-0 flex-col rounded-3xl bg-white/5 p-4 shadow-lg backdrop-blur-lg"
-            style={{ height: "30vh" }}
+            style={{ height: "50vh" }}
           >
             <div className="text-xs uppercase tracking-[0.4em] text-white/60">
               Subjects
@@ -335,19 +370,13 @@ const ThreatDashboard = () => {
       <footer className="flex h-[20vh] items-center gap-6 px-6 pb-4">
         <div className="flex h-full flex-1 flex-col justify-between overflow-hidden rounded-3xl bg-white/5 p-4 shadow-lg backdrop-blur-lg">
           <div className="grid grid-cols-4 gap-4">
-            {viewButtons.map(({ key, label, icon: Icon }) => (
+            {primaryViewButtons.map(({ key, label, icon: Icon }) => (
               <Button
                 key={key}
-                onClick={() => {
-                  setCurrentView(key);
-                  if (key === "tts") {
-                    handleReadBriefing();
-                  }
-                }}
-                disabled={key === "tts" && isReading}
+                onClick={() => setView(key)}
                 className={cn(
                   "flex h-16 flex-col items-center justify-center rounded-2xl border border-white/10 text-xs uppercase tracking-[0.3em] transition",
-                  currentView === key
+                  view === key
                     ? "bg-white text-black shadow-[0_0_25px_rgba(22,241,149,0.45)]"
                     : "bg-white/10 text-white shadow-lg hover:bg-white/20"
                 )}
@@ -356,6 +385,19 @@ const ThreatDashboard = () => {
                 <span className="text-[0.7rem] text-center">{label}</span>
               </Button>
             ))}
+            <Button
+              onClick={handleReadBriefing}
+              disabled={isReading}
+              className={cn(
+                "flex h-16 flex-col items-center justify-center rounded-2xl border border-white/10 text-xs uppercase tracking-[0.3em] transition",
+                isReading
+                  ? "bg-white text-black shadow-[0_0_25px_rgba(22,241,149,0.45)]"
+                  : "bg-white/10 text-white shadow-lg hover:bg-white/20"
+              )}
+            >
+              <Volume2 className="mb-2 h-5 w-5" />
+              <span className="text-[0.7rem] text-center">Read Briefing (TTS)</span>
+            </Button>
           </div>
           <div className="mt-4 flex flex-1 items-center justify-between rounded-2xl bg-black/40 p-4">
             <div className="max-w-[60%] space-y-2 text-sm text-white/70">
