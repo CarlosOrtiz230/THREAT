@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import droneFeed from "@/assets/videos/drone_feed.mp4";
 import {
   AlertTriangle,
   Map,
@@ -34,6 +35,8 @@ const THREAT_META = {
   },
 };
 
+const DEFAULT_VIDEO_SOURCE = droneFeed;
+
 const demoCases = [
   {
     id: "case1",
@@ -44,6 +47,7 @@ const demoCases = [
     threatScore: 25,
     summary:
       "Case ORBIT-01. Two individuals identified with calm posture. No weapons or suspects detected. Continue low-altitude observation.",
+    videoSrc: DEFAULT_VIDEO_SOURCE,
     subjects: [],
     weaponNotes: "Thermal sweep clear. No metallic signatures detected.",
   },
@@ -62,8 +66,10 @@ const demoCases = [
         name: "No matches",
         status: "Faces obscured",
         note: "Unable to match with any known database entries.",
+        image: null,
       },
     ],
+    videoSrc: DEFAULT_VIDEO_SOURCE,
     weaponNotes: "Possible holstered pistol detected at 42% confidence via silhouette analysis.",
   },
   {
@@ -81,8 +87,10 @@ const demoCases = [
         name: "Lena Ortiz",
         status: "Suspect matched",
         note: "AWS Rekognition confidence 97%. Prior incident: covert arms trafficking.",
+        image: null,
       },
     ],
+    videoSrc: DEFAULT_VIDEO_SOURCE,
     weaponNotes: "Compact SMG visible with 96% confidence. Safety off, muzzle pointed toward loading dock.",
   },
 ];
@@ -107,6 +115,7 @@ const ThreatDashboard = () => {
   const audioRef = useRef(null);
 
   const activeCase = demoCases[activeIndex];
+  const videoSource = activeCase.videoSrc ?? DEFAULT_VIDEO_SOURCE;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -134,7 +143,10 @@ const ThreatDashboard = () => {
     };
   }, [audioSrc]);
 
-  const threatMeta = useMemo(() => THREAT_META[activeCase.threatLevel], [activeCase]);
+  const threatMeta = useMemo(
+    () => THREAT_META[activeCase.threatLevel],
+    [activeCase.threatLevel]
+  );
 
   const handleReadBriefing = async () => {
     const apiKey =
@@ -227,13 +239,11 @@ const ThreatDashboard = () => {
           <CardContent className="relative flex flex-1 items-center justify-center p-0">
             <video
               className="h-full w-full rounded-b-3xl object-cover"
-              src="/assets/videos/drone_enroute.mp4" 
+              src={videoSource}
               onError={() => setVideoError(true)}
               controls
               muted
-            >
-              {/* TODO: replace src with /assets/videos/drone_feed.mp4 */}
-            </video>
+            />
             {videoError && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-center">
                 <WifiOff className="mb-4 h-[5vh] w-[5vh] text-white/40" />
@@ -284,23 +294,40 @@ const ThreatDashboard = () => {
                   No subject detected
                 </div>
               ) : (
-                activeCase.subjects.map((subject) => (
-                  <div
-                    key={subject.id}
-                    className="flex items-center gap-[1vw] rounded-2xl border border-white/10 bg-black/50 p-[2vh]"
-                  >
-                    <div className="h-[8vh] w-[8vh] overflow-hidden rounded-2xl bg-white/5">
-                      {/* TODO: replace src with /assets/images/subject_${subject.id}.jpg */}
+                activeCase.subjects.map((subject) => {
+                  const subjectImage = subject.image ?? null;
+
+                  return (
+                    <div
+                      key={subject.id}
+                      className="flex items-center gap-[1vw] rounded-2xl border border-white/10 bg-black/50 p-[2vh]"
+                    >
+                      <div className="h-[8vh] w-[8vh] overflow-hidden rounded-2xl bg-white/5">
+                        {subjectImage ? (
+                          <img
+                            src={subjectImage}
+                            alt={subject.name}
+                            className="h-full w-full object-cover"
+                            onError={(event) => {
+                              event.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1f2933] via-[#111827] to-[#0a0a0f] text-[0.55rem] uppercase tracking-[0.3em] text-white/40">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-[0.5vh]">
+                        <p className="text-lg font-semibold">{subject.name}</p>
+                        <p className="text-sm uppercase tracking-[0.3em] text-white/50">
+                          {subject.status}
+                        </p>
+                        <p className="text-sm text-white/70">{subject.note}</p>
+                      </div>
                     </div>
-                    <div className="space-y-[0.5vh]">
-                      <p className="text-lg font-semibold">{subject.name}</p>
-                      <p className="text-sm uppercase tracking-[0.3em] text-white/50">
-                        {subject.status}
-                      </p>
-                      <p className="text-sm text-white/70">{subject.note}</p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </CardContent>
           </Card>

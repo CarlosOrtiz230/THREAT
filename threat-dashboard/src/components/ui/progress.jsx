@@ -2,12 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-type ProgressProps = React.HTMLAttributes<HTMLDivElement> & {
-  value?: number;
-  indicatorClassName?: string;
-};
-
-const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
+const Progress = React.forwardRef(
   ({ className, value = 0, indicatorClassName, ...props }, ref) => (
     <div
       ref={ref}
