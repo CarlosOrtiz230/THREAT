@@ -6,23 +6,80 @@
 /e2e/test-output/
 /.angular/
 .angular/
-
+THREAT\threat-dashboard\node_modules
+ 
 # Node modules and dependency files
 /node_modules/
 /package-lock.json
 /yarn.lock
-
+ 
 # Environment files
 /.env
-
+ 
 # Angular CLI and build artefacts
 /.angular-cli.json
 /.ng/
-
+ 
 # TypeScript cache
 *.tsbuildinfo
-
+ 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+ 
+ 
+# ===================================
+# React / Node Project Ignore File
+# ===================================
+ 
+# React build and output directories
+THREAT/threat-dashboard/build/
+THREAT/threat-dashboard/dist/
+THREAT/threat-dashboard/.parcel-cache/
+THREAT/threat-dashboard/.next/
+THREAT/threat-dashboard/.vite/
+THREAT/threat-dashboard/.turbo/
+THREAT/threat-dashboard/.cache/
+ 
+# Node modules and dependency files
+THREAT/threat-dashboard/node_modules/
+THREAT/threat-dashboard/package-lock.json
+THREAT/threat-dashboard/yarn.lock
+THREAT/threat-dashboard/pnpm-lock.yaml
+ 
+# Environment and local config files
+THREAT/threat-dashboard/.env
+THREAT/threat-dashboard/.env.local
+THREAT/threat-dashboard/.env.development.local
+THREAT/threat-dashboard/.env.test.local
+THREAT/threat-dashboard/.env.production.local
+ 
+# Logs
+THREAT/threat-dashboard/npm-debug.log*
+THREAT/threat-dashboard/yarn-debug.log*
+THREAT/threat-dashboard/yarn-error.log*
+THREAT/threat-dashboard/pnpm-debug.log*
+ 
+# Testing / coverage output
+THREAT/threat-dashboard/coverage/
+THREAT/threat-dashboard/.nyc_output/
+THREAT/threat-dashboard/jest-html-reporters-*.html
+ 
+# TypeScript cache / build artifacts
+THREAT/threat-dashboard/tsconfig.tsbuildinfo
+THREAT/threat-dashboard/*.tsbuildinfo
+ 
+# Editor and system files
+THREAT/threat-dashboard/.vscode/
+THREAT/threat-dashboard/.idea/
+THREAT/threat-dashboard/.DS_Store
+THREAT/threat-dashboard/Thumbs.db
+ 
+# Optional: temporary data or mock files
+THREAT/threat-dashboard/tmp/
+THREAT/threat-dashboard/data/
+THREAT/threat-dashboard/test-output/
+ 
+ 
+ 
