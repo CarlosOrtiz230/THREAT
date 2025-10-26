@@ -238,9 +238,12 @@ const ThreatDashboard = () => {
       <header className="flex h-[10vh] items-center justify-between border-b border-white/10 bg-white/5 px-8 backdrop-blur-md shadow-lg">
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-[0.6em] text-white/60">
-            DRONE AI THREAT DASHBOARD
+            # T.H.R.E.A.T.
           </p>
-          <h1 className="text-3xl font-semibold text-white">Command Uplink</h1>
+          <h1 className="text-3xl font-semibold text-white">
+            T.H.R.E.A.T. – Tactical Hazard Recognition and Evaluation for Agent
+            Safety
+          </h1>
         </div>
         <div className="text-right">
           <p className="text-sm uppercase tracking-[0.4em] text-white/60">
