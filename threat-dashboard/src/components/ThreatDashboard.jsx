@@ -227,6 +227,7 @@ const ThreatDashboard = () => {
           <CardContent className="relative flex flex-1 items-center justify-center p-0">
             <video
               className="h-full w-full rounded-b-3xl object-cover"
+              src="/assets/videos/drone_enroute.mp4" 
               onError={() => setVideoError(true)}
               controls
               muted
