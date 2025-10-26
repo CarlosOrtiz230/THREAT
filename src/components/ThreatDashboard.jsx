@@ -606,7 +606,7 @@ const ThreatDashboard = () => {
       </main>
 
       <footer className="relative flex h-[20vh] items-center gap-6 px-6 pb-4">
-        <div className="flex h-full flex-1 flex-col justify-between overflow-hidden rounded-3xl bg-white/5 p-4 shadow-lg backdrop-blur-lg">
+        <div className="flex h-full flex-1 flex-col gap-4 overflow-hidden rounded-3xl bg-white/5 p-4 shadow-lg backdrop-blur-lg">
           <div className="grid grid-cols-4 gap-4">
             {primaryViewButtons.map(({ key, label, icon: Icon }) => (
               <Button
@@ -637,28 +637,12 @@ const ThreatDashboard = () => {
               <span className="text-[0.7rem] text-center">Read Briefing (TTS)</span>
             </Button>
           </div>
-          <div className="mt-4 flex flex-1 items-center justify-between rounded-2xl bg-black/40 p-4">
-            <div className="max-w-[60%] space-y-2 text-sm text-white/70">
-              <p className="uppercase tracking-[0.3em] text-white/50">
-                Audio Control
-              </p>
-              <p className="leading-relaxed text-white/60">
-                Trigger briefing playback to hear the active case summary without displaying it on this view.
-              </p>
-              {ttsError && <p className="text-xs text-[#ff4b4b]">{ttsError}</p>}
+          {ttsError && (
+            <div className="rounded-2xl bg-black/60 p-3 text-xs text-[#ff4b4b]">
+              {ttsError}
             </div>
-            <div className="flex w-56 flex-col gap-2">
-              <audio
-                ref={audioRef}
-                controls
-                src={audioSrc}
-                className="w-full rounded-xl bg-black/60"
-              />
-              <span className="text-[0.65rem] text-white/40">
-                Audio generated via OpenAI Text-to-Speech
-              </span>
-            </div>
-          </div>
+          )}
+          <audio ref={audioRef} src={audioSrc} className="hidden" />
         </div>
         <div className="flex h-full w-64 flex-col gap-4 rounded-3xl bg-white/5 p-4 shadow-lg backdrop-blur-lg">
           <div className="relative flex flex-1">
