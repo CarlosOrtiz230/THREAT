@@ -408,7 +408,7 @@ const ThreatDashboard = () => {
             onError={() => setVideoError(true)}
             onLoadedData={() => setVideoError(false)}
           >
-            <source src="/assets/videos/drone_negotiation.mp4" type="video/mp4" />
+            <source src="/public/videos/drone_negotiation.mp4" type="video/mp4" />
           </video>
           {videoError && (
             <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
@@ -431,7 +431,7 @@ const ThreatDashboard = () => {
             onError={() => setVideoError(true)}
             onLoadedData={() => setVideoError(false)}
           >
-            <source src="/assets/videos/drone_scanning.mp4" type="video/mp4" />
+            <source src="/public/videos/drone_scanning.mp4" type="video/mp4" />
           </video>
           {videoError && (
             <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
@@ -454,7 +454,7 @@ const ThreatDashboard = () => {
             onError={() => setVideoError(true)}
             onLoadedData={() => setVideoError(false)}
           >
-            <source src="/assets/videos/drone_enroute.mp4" type="video/mp4" />
+            <source src="/public/videos/drone_enroute.mp4" type="video/mp4" />
           </video>
           {videoError && (
             <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/80 text-sm uppercase tracking-[0.3em] text-white/70">
