@@ -22,7 +22,7 @@ const demoCases = [
     weapon_detected: 0,
     subjects: [],
     summary: "Routine domestic call. Two unarmed individuals detected.",
-    videoSrc: null,
+    videoSrc: "/videos/drone_feed.mp4",
   },
   {
     id: 2,
@@ -119,8 +119,7 @@ const ThreatDashboard = () => {
   );
 
   const handleReadBriefing = async () => {
-    const apiKey =
-      (typeof process !== "undefined" && process.env?.OPENAI_API_KEY) || "";
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
 
     if (!apiKey) {
       setTtsError("Missing OpenAI API key.");
@@ -205,23 +204,21 @@ const ThreatDashboard = () => {
             </span>
           </div>
           <div className="relative flex-1 overflow-hidden rounded-2xl bg-black/70">
-            {activeCase.videoSrc ? (
-              <video
-                className="w-full h-full object-cover rounded-lg"
-                src={activeCase.videoSrc}
-                muted
-                loop
-                autoPlay
-              >
-                {/* TODO: replace src with /src/assets/videos/drone_feed.mp4 */}
-              </video>
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <span className="text-sm uppercase tracking-[0.5em] text-white/50">
-                  NO SIGNAL DETECTED
-                </span>
-              </div>
-            )}
+          {activeCase.videoSrc ? (
+            <video
+              className="w-full h-full object-cover rounded-lg"
+              src={activeCase.videoSrc}
+              muted
+              loop
+              autoPlay
+            ></video>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="text-sm uppercase tracking-[0.5em] text-white/50">
+                NO SIGNAL DETECTED
+              </span>
+            </div>
+          )}
             <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-3 rounded-full bg-black/50 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/70">
               <Circle className="h-3 w-3 text-[#ff4b4b]" />
               <span>REC</span>
