@@ -140,13 +140,13 @@ const ThreatDashboard = () => {
     [activeCase.severity]
   );
 
-  const handleReadBriefing = async () => {
-    const apiKey = process.env.OPENAI_API_KEY || "";
+    const handleReadBriefing = async () => {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
 
-    if (!apiKey) {
-      setTtsError("Missing OpenAI API key.");
-      return;
-    }
+      if (!apiKey) {
+        setTtsError("Missing OpenAI API key.");
+        return;
+      }
 
     setIsReading(true);
     setTtsError("");
@@ -396,9 +396,9 @@ const ThreatDashboard = () => {
   }, [demoSelected, dronePhase, updatePhaseData]);
 
   const phaseVideoSources = {
-    EN_ROUTE: "/videos/drone_enroute.mp4",
-    SCANNING: "/videos/drone_scanning.mp4",
-    NEGOTIATION: "/videos/drone_negotiation.mp4",
+    EN_ROUTE: "public/videos/drone_enroute.mp4",
+    SCANNING: "public/videos/drone_scanning.mp4",
+    NEGOTIATION: "public/videos/drone_negotiation.mp4",
   };
 
   const renderDronePhase = () => {
