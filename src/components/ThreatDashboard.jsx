@@ -17,12 +17,12 @@ const demoCases = [
   {
     id: 1,
     mission: "ORBIT-02",
-    severity: "low",
-    people_count: 2,
+    severity: "medium",
+    people_count: 3,
     weapon_detected: 0,
     subjects: [],
-    summary: "Routine domestic call. Two unarmed individuals detected.",
-    videoSrc: "/videos/drone_feed.mp4",
+    summary:
+      "Caller reports disturbance; three people inside; no confirmed weapon on call.",
   },
   {
     id: 2,
@@ -74,23 +74,34 @@ const formatTimer = (seconds) => {
 };
 
 const ThreatDashboard = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  // demo selection state replaces auto-rotation
+  const [demoSelected, setDemoSelected] = useState(1);
+  // reactive case data for demo updates (weapon detection, etc.)
+  const [casesState, setCasesState] = useState(() =>
+    demoCases.map((caseItem) => ({ ...caseItem }))
+  );
   const [syncTimer, setSyncTimer] = useState(0);
+  // view control between drone/map/summary
   const [view, setView] = useState("drone");
   const [audioSrc, setAudioSrc] = useState("");
   const [isReading, setIsReading] = useState(false);
   const [ttsError, setTtsError] = useState("");
   const audioRef = useRef(null);
   const [mapUnavailable, setMapUnavailable] = useState(false);
+  // drone mission phase tracking for demo logic
+  const [dronePhase, setDronePhase] = useState("IDLE");
+  // countdown timer in seconds for drone trip
+  const [tripSeconds, setTripSeconds] = useState(0);
+  // simulated detection flag
+  const [weaponDetected, setWeaponDetected] = useState(false);
+  // toast feedback for unavailable actions
+  const [notice, setNotice] = useState("");
+  const noticeTimeoutRef = useRef(null);
 
-  const activeCase = demoCases[activeIndex];
-
-  useEffect(() => {
-    const rotation = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % demoCases.length);
-    }, 10000);
-    return () => clearInterval(rotation);
-  }, []);
+  const activeCase = useMemo(
+    () => casesState.find((caseItem) => caseItem.id === demoSelected) ?? casesState[0],
+    [casesState, demoSelected]
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -98,6 +109,21 @@ const ThreatDashboard = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (noticeTimeoutRef.current) {
+      clearTimeout(noticeTimeoutRef.current);
+    }
+    if (!notice) {
+      return;
+    }
+    noticeTimeoutRef.current = setTimeout(() => setNotice(""), 3000);
+    return () => {
+      if (noticeTimeoutRef.current) {
+        clearTimeout(noticeTimeoutRef.current);
+      }
+    };
+  }, [notice]);
 
   useEffect(() => {
     return () => {
@@ -113,7 +139,7 @@ const ThreatDashboard = () => {
   );
 
   const handleReadBriefing = async () => {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
+    const apiKey = process.env.OPENAI_API_KEY || "";
 
     if (!apiKey) {
       setTtsError("Missing OpenAI API key.");
@@ -177,6 +203,133 @@ const ThreatDashboard = () => {
     setMapUnavailable(false);
   }, [view]);
 
+  useEffect(() => {
+    // reset demo state whenever a new demo is selected
+    const baseCase = demoCases.find((item) => item.id === demoSelected);
+    if (!baseCase) {
+      return;
+    }
+
+    setCasesState((prev) =>
+      prev.map((caseItem) =>
+        caseItem.id === demoSelected ? { ...baseCase } : caseItem
+      )
+    );
+    setWeaponDetected(false);
+    setNotice("");
+
+    if (demoSelected === 1) {
+      // kick off the scripted trip for demo 1
+      setDronePhase("EN_ROUTE");
+      setTripSeconds(90);
+    } else {
+      setDronePhase("IDLE");
+      setTripSeconds(0);
+    }
+  }, [demoSelected]);
+
+  useEffect(() => {
+    if (dronePhase !== "EN_ROUTE") {
+      return;
+    }
+
+    if (tripSeconds <= 0) {
+      setDronePhase("SCANNING");
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTripSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setDronePhase("SCANNING");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [dronePhase, tripSeconds]);
+
+  useEffect(() => {
+    if (dronePhase !== "SCANNING" || demoSelected !== 1 || weaponDetected) {
+      return;
+    }
+
+    // simulate scanning detection for demo 1 (replace with real detection feed)
+    const detectionTimeout = setTimeout(() => {
+      setWeaponDetected(true);
+      setCasesState((prev) =>
+        prev.map((caseItem) =>
+          caseItem.id === 1
+            ? { ...caseItem, weapon_detected: 1, severity: "high" }
+            : caseItem
+        )
+      );
+    }, 6000);
+
+    return () => clearTimeout(detectionTimeout);
+  }, [dronePhase, demoSelected, weaponDetected]);
+
+  const handleSelectDemo = (id) => {
+    setDemoSelected(id);
+    setView("drone");
+  };
+
+  const handleNegotiation = () => {
+    if (dronePhase === "SCANNING" && weaponDetected) {
+      setDronePhase("NEGOTIATION");
+      setNotice("");
+      return;
+    }
+
+    setNotice("Negotiation unavailable — no confirmed threat.");
+  };
+
+  const tripTimerDisplay = formatTimer(tripSeconds);
+  const negotiationUnlocked = dronePhase === "SCANNING" && weaponDetected;
+
+  const renderDronePhase = () => {
+    if (dronePhase === "NEGOTIATION") {
+      return (
+        <video className="w-full h-full object-cover rounded-lg" controls>
+          {/* TODO: replace src with /src/assets/videos/drone_negotiation.mp4 */}
+          <source src="" type="video/mp4" />
+          NO SIGNAL DETECTED
+        </video>
+      );
+    }
+
+    if (dronePhase === "SCANNING") {
+      return (
+        <video className="w-full h-full object-cover rounded-lg" controls>
+          {/* TODO: replace src with /src/assets/videos/drone_scanning.mp4 */}
+          <source src="" type="video/mp4" />
+          NO SIGNAL DETECTED
+        </video>
+      );
+    }
+
+    if (dronePhase === "EN_ROUTE") {
+      return (
+        <video className="w-full h-full object-cover rounded-lg" controls>
+          {/* TODO: replace src with /src/assets/videos/drone_enroute.mp4 */}
+          <source src="" type="video/mp4" />
+          NO SIGNAL DETECTED
+        </video>
+      );
+    }
+
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <span className="text-sm uppercase tracking-[0.5em] text-white/50">
+          DRONE STANDING BY
+        </span>
+      </div>
+    );
+  };
+
   const renderPrimaryView = () => {
     if (view === "map") {
       return (
@@ -210,27 +363,19 @@ const ThreatDashboard = () => {
       );
     }
 
-    return activeCase.videoSrc ? (
-      <video
-        className="h-full w-full rounded-lg object-cover"
-        src={activeCase.videoSrc}
-        muted
-        loop
-        autoPlay
-      ></video>
-    ) : (
-      <div className="flex h-full w-full items-center justify-center">
-        <span className="text-sm uppercase tracking-[0.5em] text-white/50">
-          NO SIGNAL DETECTED
-        </span>
-      </div>
-    );
+    return renderDronePhase();
   };
 
   const primaryViewButtons = [
     { key: "drone", label: "Drone View", icon: Video },
     { key: "map", label: "Map", icon: Map },
     { key: "summary", label: "AI Summary", icon: ScrollText },
+  ];
+
+  const demoButtons = [
+    { id: 1, label: "Demo 1" },
+    { id: 2, label: "Demo 2" },
+    { id: 3, label: "Demo 3" },
   ];
 
   return (
@@ -245,12 +390,39 @@ const ThreatDashboard = () => {
             Safety
           </h1>
         </div>
-        <div className="text-right">
+        <div className="flex flex-col items-end gap-2 text-right">
+          <div className="flex items-center gap-2">
+            {demoButtons.map(({ id, label }) => (
+              <Button
+                key={id}
+                size="default"
+                onClick={() => handleSelectDemo(id)}
+                className={cn(
+                  "h-9 rounded-xl border border-white/20 bg-white/10 px-4 text-xs uppercase tracking-[0.3em]",
+                  demoSelected === id
+                    ? "bg-white text-black shadow-[0_0_15px_rgba(22,241,149,0.35)]"
+                    : "text-white hover:bg-white/20"
+                )}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
           <p className="text-sm uppercase tracking-[0.4em] text-white/60">
             Mission {activeCase.mission}
           </p>
           <p className="text-3xl font-mono">{formatTimer(syncTimer)}</p>
-          <p className="text-xs text-white/50">Auto rotation every 10 seconds</p>
+          {dronePhase === "EN_ROUTE" ? (
+            <p className="text-xs text-emerald-300/80">
+              Trip ETA: {tripTimerDisplay}
+            </p>
+          ) : dronePhase === "SCANNING" ? (
+            <p className="text-xs text-emerald-300/80">Drone scanning on-site</p>
+          ) : dronePhase === "NEGOTIATION" ? (
+            <p className="text-xs text-emerald-300/80">Negotiation channel active</p>
+          ) : (
+            <p className="text-xs text-white/50">Awaiting drone tasking</p>
+          )}
         </div>
       </header>
 
@@ -277,6 +449,18 @@ const ThreatDashboard = () => {
               <span>REC</span>
               <Wifi className="h-3 w-3 text-white/60" />
             </div>
+            {view === "drone" && (
+              <div className="pointer-events-none absolute right-4 top-4 flex flex-col items-end gap-1 text-xs uppercase tracking-[0.3em] text-white/70">
+                <span className="rounded-full bg-black/60 px-3 py-1">
+                  {dronePhase.replace("_", " ")}
+                </span>
+                {dronePhase === "EN_ROUTE" && (
+                  <span className="rounded-full bg-black/40 px-3 py-1 font-mono text-sm">
+                    {tripTimerDisplay}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
@@ -370,7 +554,7 @@ const ThreatDashboard = () => {
         </section>
       </main>
 
-      <footer className="flex h-[20vh] items-center gap-6 px-6 pb-4">
+      <footer className="relative flex h-[20vh] items-center gap-6 px-6 pb-4">
         <div className="flex h-full flex-1 flex-col justify-between overflow-hidden rounded-3xl bg-white/5 p-4 shadow-lg backdrop-blur-lg">
           <div className="grid grid-cols-4 gap-4">
             {primaryViewButtons.map(({ key, label, icon: Icon }) => (
@@ -424,14 +608,44 @@ const ThreatDashboard = () => {
           </div>
         </div>
         <div className="flex h-full w-64 flex-col gap-4 rounded-3xl bg-white/5 p-4 shadow-lg backdrop-blur-lg">
-          <Button className="flex flex-1 items-center justify-center rounded-2xl bg-white/10 text-white shadow-lg transition hover:bg-white/20">
-            <Radio className="mr-3 h-6 w-6" />
-            <span className="text-sm uppercase tracking-[0.3em]">Drone Negotiation</span>
-          </Button>
+          <div className="relative flex flex-1">
+            <Button
+              disabled={!negotiationUnlocked}
+              onClick={handleNegotiation}
+              className={cn(
+                "relative flex h-full w-full items-center justify-center rounded-2xl bg-white/10 text-white shadow-lg transition hover:bg-white/20",
+                negotiationUnlocked
+                  ? "border-2 border-emerald-400 shadow-[0_0_25px_rgba(22,241,149,0.45)]"
+                  : "opacity-60"
+              )}
+            >
+              <Radio className="mr-3 h-6 w-6" />
+              <span className="text-sm uppercase tracking-[0.3em]">Drone Negotiation</span>
+              {negotiationUnlocked && (
+                <span className="absolute -right-3 -top-3 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400 text-[0.6rem] font-bold text-black animate-ping">
+                  ●
+                </span>
+              )}
+            </Button>
+            {!negotiationUnlocked && (
+              <button
+                type="button"
+                onClick={() => setNotice("Negotiation unavailable — no confirmed threat.")}
+                className="absolute inset-0 cursor-not-allowed rounded-2xl bg-transparent"
+              >
+                <span className="sr-only">Negotiation locked</span>
+              </button>
+            )}
+          </div>
           <Button className="flex flex-1 items-center justify-center rounded-2xl bg-white/10 text-white shadow-lg transition hover:bg-white/20">
             <Mic className="h-6 w-6" />
           </Button>
         </div>
+        {notice && (
+          <div className="pointer-events-none absolute bottom-6 right-6 rounded-2xl bg-black/80 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/80">
+            {notice}
+          </div>
+        )}
       </footer>
     </div>
   );
